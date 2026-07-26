@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ImperaZim — Room of Void</title>
+<meta name="description" content="ImperaZim — programmer building chaotic, cyberpunk-flavored tools. PHP, TypeScript, C#, PocketMine plugins.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#08080c;
+    --void-deep:#0e0e16;
+    --void-card:#111119;
+    --cyan:#00f0d0;
+    --violet:#a35bff;
+    --fog:#8b8b9a;
+    --paper:#eaeaf0;
+    --line: rgba(234,234,240,0.09);
+    --line-bright: rgba(0,240,208,0.35);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--void);
+    color:var(--paper);
+    font-family:'Sora', sans-serif;
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* scanline / void texture overlay */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.012) 0px,
+      rgba(255,255,255,0.012) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode:overlay;
+  }
+
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-1;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 0%, rgba(163,91,255,0.10), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, rgba(0,240,208,0.06), transparent 60%);
+  }
+
+  .mono{font-family:'Space Mono', monospace;}
+
+  a{color:inherit;text-decoration:none;}
+
+  ::selection{background:var(--cyan);color:var(--void);}
+
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed;
+    top:0;left:0;right:0;
+    z-index:100;
+    background:rgba(8,8,12,0.75);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1040px;
+    margin:0 auto;
+    padding:18px 32px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .nav-logo{
+    font-family:'Space Mono', monospace;
+    font-size:14px;
+    letter-spacing:0.02em;
+  }
+  .nav-logo span{color:var(--cyan);}
+  .nav-links{
+    display:flex;
+    gap:28px;
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    text-transform:lowercase;
+    letter-spacing:0.03em;
+  }
+  .nav-links a{
+    color:var(--fog);
+    transition:color .2s;
+    position:relative;
+  }
+  .nav-links a:hover{color:var(--cyan);}
+  .nav-links a::before{content:"./ ";color:var(--violet);opacity:0.6;}
+
+  @media (max-width:640px){
+    .nav-links{display:none;}
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    position:relative;
+    padding-top:80px;
+  }
+
+  .void-ring{
+    position:absolute;
+    right:-120px;
+    top:50%;
+    transform:translateY(-50%);
+    width:520px;
+    height:520px;
+    border-radius:50%;
+    border:1px solid rgba(0,240,208,0.18);
+    pointer-events:none;
+  }
+  .void-ring::before{
+    content:"";
+    position:absolute;
+    inset:60px;
+    border-radius:50%;
+    border:1px solid rgba(163,91,255,0.16);
+    animation:spin 40s linear infinite;
+  }
+  .void-ring::after{
+    content:"";
+    position:absolute;
+    inset:130px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(0,240,208,0.14), transparent 70%);
+    filter:blur(6px);
+    animation:pulse 5s ease-in-out infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes pulse{
+    0%,100%{opacity:0.5;transform:scale(1);}
+    50%{opacity:0.9;transform:scale(1.08);}
+  }
+  @media (max-width:900px){.void-ring{display:none;}}
+
+  .terminal-line{
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    color:var(--cyan);
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .cursor{
+    display:inline-block;
+    width:8px;height:16px;
+    background:var(--cyan);
+    animation:blink 1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  h1.title{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:clamp(42px, 8vw, 88px);
+    line-height:1.02;
+    letter-spacing:-0.01em;
+    max-width:820px;
+    position:relative;
+  }
+  h1.title .glitch{
+    color:var(--paper);
+    position:relative;
+    display:inline-block;
+  }
+  h1.title .glitch::before,
+  h1.title .glitch::after{
+    content:attr(data-text);
+    position:absolute;
+    left:0;top:0;
+    width:100%;
+    overflow:hidden;
+    clip-path: inset(0 0 0 0);
+  }
+  h1.title .glitch::before{
+    color:var(--cyan);
+    animation:glitchTop 6s infinite steps(1);
+    z-index:-1;
+  }
+  h1.title .glitch::after{
+    color:var(--violet);
+    animation:glitchBot 6s infinite steps(1);
+    z-index:-1;
+  }
+  @keyframes glitchTop{
+    0%,92%,100%{clip-path:inset(0 0 100% 0); transform:translate(0,0);}
+    93%{clip-path:inset(0 0 60% 0); transform:translate(-3px,-1px);}
+    95%{clip-path:inset(30% 0 20% 0); transform:translate(3px,1px);}
+    97%{clip-path:inset(0 0 100% 0); transform:translate(0,0);}
+  }
+  @keyframes glitchBot{
+    0%,92%,100%{clip-path:inset(100% 0 0 0); transform:translate(0,0);}
+    93%{clip-path:inset(60% 0 0 0); transform:translate(3px,1px);}
+    95%{clip-path:inset(20% 0 30% 0); transform:translate(-3px,-1px);}
+    97%{clip-path:inset(100% 0 0 0); transform:translate(0,0);}
+  }
+
+  .subtitle{
+    margin-top:24px;
+    font-size:17px;
+    color:var(--fog);
+    max-width:520px;
+    font-weight:300;
+  }
+
+  .hero-tags{
+    margin-top:36px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .tag{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    padding:7px 12px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    color:var(--fog);
+    letter-spacing:0.03em;
+  }
+  .scroll-hint{
+    position:absolute;
+    bottom:36px;
+    left:32px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--fog);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .scroll-hint .bar{
+    width:1px;height:36px;
+    background:linear-gradient(to bottom, var(--cyan), transparent);
+    animation:scrollmove 2s ease-in-out infinite;
+  }
+  @keyframes scrollmove{0%,100%{opacity:0.3;}50%{opacity:1;}}
+
+  /* ---------- SECTION SHARED ---------- */
+  section{
+    padding:120px 0;
+    border-top:1px solid var(--line);
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--violet);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{content:"//";color:var(--cyan);}
+  h2.h-title{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:clamp(28px,4vw,42px);
+    margin-bottom:48px;
+    max-width:600px;
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about-grid{
+    display:grid;
+    grid-template-columns:1.2fr 0.8fr;
+    gap:60px;
+  }
+  @media (max-width:800px){.about-grid{grid-template-columns:1fr;}}
+
+  .about-text p{
+    color:var(--fog);
+    font-size:16px;
+    margin-bottom:18px;
+    max-width:520px;
+  }
+  .about-text strong{color:var(--paper);font-weight:500;}
+
+  .sysinfo{
+    background:var(--void-card);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:24px;
+    font-family:'Space Mono', monospace;
+    font-size:12.5px;
+    height:fit-content;
+  }
+  .sysinfo .si-head{
+    color:var(--cyan);
+    border-bottom:1px solid var(--line);
+    padding-bottom:12px;
+    margin-bottom:14px;
+    letter-spacing:0.04em;
+  }
+  .sysinfo .si-row{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    color:var(--fog);
+    gap:16px;
+  }
+  .sysinfo .si-row span:last-child{color:var(--paper);text-align:right;}
+
+  /* ---------- SKILLS ---------- */
+  .skill-block{margin-bottom:36px;}
+  .skill-block:last-child{margin-bottom:0;}
+  .skill-label{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--fog);
+    margin-bottom:14px;
+    letter-spacing:0.04em;
+  }
+  .skill-label b{color:var(--violet);}
+  .chip-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .chip{
+    padding:9px 16px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-size:14px;
+    color:var(--paper);
+    transition:border-color .2s, color .2s, transform .2s;
+  }
+  .chip:hover{
+    border-color:var(--line-bright);
+    color:var(--cyan);
+    transform:translateY(-2px);
+  }
+
+  /* ---------- PROJECTS ---------- */
+  .proj-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  @media (max-width:720px){.proj-grid{grid-template-columns:1fr;}}
+  .proj-card{
+    background:var(--void);
+    padding:32px;
+    transition:background .25s;
+    display:flex;
+    flex-direction:column;
+    min-height:190px;
+  }
+  .proj-card:hover{background:var(--void-card);}
+  .proj-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:14px;
+  }
+  .proj-name{
+    font-family:'Space Mono', monospace;
+    font-size:16px;
+    font-weight:700;
+  }
+  .proj-arrow{
+    color:var(--fog);
+    transition:transform .2s, color .2s;
+  }
+  .proj-card:hover .proj-arrow{color:var(--cyan);transform:translate(3px,-3px);}
+  .proj-desc{
+    color:var(--fog);
+    font-size:14px;
+    flex-grow:1;
+  }
+  .proj-tech{
+    margin-top:18px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--violet);
+    letter-spacing:0.03em;
+  }
+
+  /* ---------- EXPERIENCE / LOG ---------- */
+  .log{
+    border-left:1px solid var(--line);
+    padding-left:32px;
+    display:flex;
+    flex-direction:column;
+    gap:38px;
+  }
+  .log-entry{position:relative;}
+  .log-entry::before{
+    content:"";
+    position:absolute;
+    left:-37px;
+    top:4px;
+    width:9px;height:9px;
+    border-radius:50%;
+    background:var(--cyan);
+    box-shadow:0 0 0 3px rgba(0,240,208,0.15);
+  }
+  .log-tag{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--cyan);
+    margin-bottom:8px;
+    letter-spacing:0.04em;
+  }
+  .log-title{font-size:17px;font-weight:500;margin-bottom:6px;}
+  .log-desc{color:var(--fog);font-size:14.5px;max-width:600px;}
+
+  /* ---------- CONTACT ---------- */
+  .contact{
+    text-align:left;
+  }
+  .contact-title{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:clamp(30px,5vw,52px);
+    max-width:640px;
+    margin-bottom:28px;
+  }
+  .contact-sub{color:var(--fog);max-width:480px;margin-bottom:40px;}
+  .contact-links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .clink{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 22px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-family:'Space Mono', monospace;
+    font-size:13px;
+    transition:border-color .2s, color .2s, background .2s;
+  }
+  .clink:hover{
+    border-color:var(--line-bright);
+    color:var(--cyan);
+    background:var(--void-card);
+  }
+  .clink .dot{width:6px;height:6px;border-radius:50%;background:var(--violet);}
+
+  footer{
+    padding:36px 0 48px;
+    text-align:left;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--fog);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  footer span{color:var(--cyan);}
+
+  @media (max-width:640px){
+    section{padding:80px 0;}
+    .wrap{padding:0 20px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">impera<span>zim</span>_</div>
+    <div class="nav-links">
+      <a href="#about">about</a>
+      <a href="#skills">skills</a>
+      <a href="#projects">projects</a>
+      <a href="#log">log</a>
+      <a href="#contact">contact</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="void-ring" aria-hidden="true"></div>
+  <div class="terminal-line"><span class="cursor"></span>whoami</div>
+  <h1 class="title">
+    <span class="glitch" data-text="ImperaZim">ImperaZim</span><br>
+    builds things<br>in the void.
+  </h1>
+  <p class="subtitle">
+    Programmer drawn to indie games with chaotic, cyberpunk settings.
+    Currently living inside PHP, TypeScript and Minecraft server internals —
+    experimenting more than shipping, on purpose.
+  </p>
+  <div class="hero-tags">
+    <span class="tag">PHP</span>
+    <span class="tag">TypeScript</span>
+    <span class="tag">C#</span>
+    <span class="tag">PocketMine-MP</span>
+    <span class="tag">React</span>
+  </div>
+  <div class="scroll-hint"><div class="bar"></div>scroll</div>
+</header>
+
+<section id="about">
+  <div class="wrap">
+    <div class="eyebrow">about</div>
+    <h2 class="h-title">A random person, mostly found in the void.</h2>
+    <div class="about-grid">
+      <div class="about-text">
+        <p>I'm known as <strong>ImperaZim</strong> — a programmer who really likes indie games
+        with chaotic and cyberpunk settings. I like to consider myself a random person,
+        more interested in experimenting with technology than following a straight line.</p>
+        <p>Most of my public work lives in <strong>PocketMine-MP</strong> plugin development —
+        economy systems, ranks, permissions, forms — plus a personal project called
+        <strong>Room of Void</strong>, my own corner of the internet to build whatever comes to mind.</p>
+        <p>I have a passion for coding and experimenting with different technologies,
+        frameworks, and the occasional glitch aesthetic.</p>
+      </div>
+      <div class="sysinfo">
+        <div class="si-head">~/sysinfo</div>
+        <div class="si-row"><span>handle</span><span>ImperaZim</span></div>
+        <div class="si-row"><span>role</span><span>Programmer</span></div>
+        <div class="si-row"><span>focus</span><span>Minecraft / PocketMine</span></div>
+        <div class="si-row"><span>aesthetic</span><span>chaotic · cyberpunk</span></div>
+        <div class="si-row"><span>repos</span><span>23+</span></div>
+        <div class="si-row"><span>status</span><span style="color:var(--cyan)">● building</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="wrap">
+    <div class="eyebrow">skills</div>
+    <h2 class="h-title">Languages & frameworks in rotation.</h2>
+
+    <div class="skill-block">
+      <div class="skill-label"><b>01</b> — Languages</div>
+      <div class="chip-row">
+        <span class="chip">PHP</span>
+        <span class="chip">JavaScript</span>
+        <span class="chip">TypeScript</span>
+        <span class="chip">C#</span>
+      </div>
+    </div>
+
+    <div class="skill-block">
+      <div class="skill-label"><b>02</b> — Frameworks & tools</div>
+      <div class="chip-row">
+        <span class="chip">React</span>
+        <span class="chip">Angular</span>
+        <span class="chip">Laravel</span>
+        <span class="chip">PocketMine-MP</span>
+        <span class="chip">Git</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="wrap">
+    <div class="eyebrow">projects</div>
+    <h2 class="h-title">Some things I've shipped into the void.</h2>
+  </div>
+  <div class="proj-grid">
+
+    <a class="proj-card" href="https://github.com/ImperaZim/EasyLibrary" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">EasyLibrary</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">A collection of public libraries for PocketMine-MP, bundling common
+      utilities so plugin developers don't have to rebuild them from scratch.</div>
+      <div class="proj-tech">PHP · PocketMine-MP</div>
+    </a>
+
+    <a class="proj-card" href="https://github.com/ImperaZim/EasyEconomy" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">EasyEconomy</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">A simple, event-driven economy system for Minecraft servers,
+      built to be easy to hook into from other plugins.</div>
+      <div class="proj-tech">PHP · PocketMine-MP</div>
+    </a>
+
+    <a class="proj-card" href="https://github.com/ImperaZim/EasyRankup" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">EasyRankup</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">Lets server owners define ranks and allows players to climb them
+      on their own using in-game currency.</div>
+      <div class="proj-tech">PHP · PocketMine-MP</div>
+    </a>
+
+    <a class="proj-card" href="https://github.com/ImperaZim/LibForm" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">LibForm</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">A form library for PocketMine that simplifies building Minecraft
+      UI forms, with both class-based and fluent-interface approaches.</div>
+      <div class="proj-tech">PHP 8.2 · Composer</div>
+    </a>
+
+    <a class="proj-card" href="https://github.com/ImperaZim/EasyWorld" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">EasyWorld</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">A plugin that streamlines how world permissions are modified,
+      down to the world level itself.</div>
+      <div class="proj-tech">PHP · PocketMine-MP</div>
+    </a>
+
+    <a class="proj-card" href="https://github.com/ImperaZim" target="_blank" rel="noopener">
+      <div class="proj-top">
+        <span class="proj-name">Room of Void</span>
+        <span class="proj-arrow">↗</span>
+      </div>
+      <div class="proj-desc">My personal void room — a space for whatever experiment comes
+      next. See the full list of 23+ repositories on GitHub.</div>
+      <div class="proj-tech">various</div>
+    </a>
+
+  </div>
+</section>
+
+<section id="log">
+  <div class="wrap">
+    <div class="eyebrow">log</div>
+    <h2 class="h-title">Where the work has gone.</h2>
+    <div class="log">
+      <div class="log-entry">
+        <div class="log-tag">ongoing</div>
+        <div class="log-title">PocketMine-MP plugin ecosystem</div>
+        <div class="log-desc">Building and maintaining a set of interoperable plugins —
+        economy, ranks, permissions, forms, world tools — designed to work together
+        on Minecraft servers.</div>
+      </div>
+      <div class="log-entry">
+        <div class="log-tag">ongoing</div>
+        <div class="log-title">Room of Void</div>
+        <div class="log-desc">A personal, ever-changing project used as a sandbox for
+        experimenting with new technologies and ideas outside of client work.</div>
+      </div>
+      <div class="log-entry">
+        <div class="log-tag">skills</div>
+        <div class="log-title">Full-stack exploration</div>
+        <div class="log-desc">Moving between backend PHP/Laravel work and frontend
+        React/Angular/TypeScript, plus C# for game-adjacent tooling.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap contact">
+    <div class="eyebrow">contact</div>
+    <h2 class="contact-title">Got something chaotic to build? Let's talk.</h2>
+    <p class="contact-sub">Fastest way to reach me is Discord — I check it far more often than anything else.</p>
+    <div class="contact-links">
+      <a class="clink" href="https://discord.com/users/imperazim" target="_blank" rel="noopener"><span class="dot"></span>Discord — imperazim</a>
+      <a class="clink" href="https://github.com/ImperaZim" target="_blank" rel="noopener"><span class="dot"></span>GitHub — @ImperaZim</a>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div>© <span id="year"></span> ImperaZim — built from the void.</div>
+  <div><span>status:</span> online</div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
